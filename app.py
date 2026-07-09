@@ -67,6 +67,8 @@ def init_db():
             location TEXT,
             designation TEXT,
             current_holder TEXT,
+            employee_code TEXT,
+            employee_mobile TEXT,
             date_issued TEXT,
             reallocation_date TEXT,
             status TEXT DEFAULT 'Active',
@@ -148,15 +150,15 @@ def login_screen():
 # ---------------------------------------------------------
 
 def add_asset(asset_type, model_name, serial_number, vendor_name, purchase_date,
-              department, location, designation, holder, date_issued, remarks):
+              department, location, designation, holder, employee_code, employee_mobile, date_issued, remarks):
     conn = get_conn()
     c = conn.cursor()
     c.execute("""
         INSERT INTO laptops (asset_type, model_name, serial_number, vendor_name, purchase_date,
-                              department, location, designation, current_holder, date_issued, status, remarks)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?)
+                              department, location, designation, current_holder, employee_code, employee_mobile, date_issued, status, remarks)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active', ?)
     """, (asset_type, model_name, serial_number, vendor_name, str(purchase_date),
-          department, location, designation, holder, str(date_issued), remarks))
+          department, location, designation, holder, employee_code, employee_mobile, str(date_issued), remarks))
     asset_id = c.lastrowid
     c.execute("""
         INSERT INTO history (laptop_id, person_name, department, location, designation, date_issued, date_ended, remarks)
@@ -464,6 +466,8 @@ def show_dashboard(role):
             with c2:
                 st.write(f"**Designation:** {row['designation']}")
                 st.write(f"**Current Holder:** {row['current_holder']}")
+                st.write(f"**Employee Code:** {row['employee_code']}")
+                st.write(f"**Employee Mobile:** {row['employee_mobile']}")
                 st.write(f"**Date Issued:** {row['date_issued']}")
                 st.write(f"**Status:** {row['status']}")
                 if role == "head_admin":
@@ -505,6 +509,8 @@ def show_add_asset():
         location = st.selectbox("Location", LOCATIONS)
         designation = st.text_input("Designation of Holder")
         holder = st.text_input("Name of Person")
+        employee_code = st.text_input("Employee Code")
+        employee_mobile = st.text_input("Employee Mobile Number")
         date_issued = st.date_input("Date Issued", value=date.today())
         remarks = st.text_area("Remarks (optional)")
 
@@ -514,7 +520,7 @@ def show_add_asset():
                 st.error("Model name is required.")
             else:
                 add_asset(asset_type, model_name, serial_number, vendor_name, purchase_date,
-                          department, location, designation, holder, date_issued, remarks)
+                          department, location, designation, holder, employee_code, employee_mobile, date_issued, remarks)
                 st.success(f"Asset '{model_name}' added successfully.")
 
 
@@ -551,6 +557,8 @@ def show_reallocate():
         with st.form("reallocate_form"):
             new_holder = st.text_input("New Holder's Name")
             new_department = st.text_input("New Department")
+            new_employee_code = st.text_input("New Employee Code")
+            new_employee_mobile = st.text_input("New Employee Mobile Number")
 
             location_options = LOCATIONS.copy()
             if current_location and current_location not in location_options:
@@ -567,8 +575,25 @@ def show_reallocate():
                 if not new_holder:
                     st.error("New holder's name is required.")
                 else:
-                    reallocate_asset(asset_id, new_holder, new_department, new_location,
-                                      new_designation, reallocation_date, remarks)
+                    conn = get_conn()
+                    c = conn.cursor()
+                    c.execute("""
+                        UPDATE history SET date_ended = ?
+                        WHERE laptop_id = ? AND date_ended IS NULL
+                    """, (str(reallocation_date), asset_id))
+                    c.execute("""
+                        UPDATE laptops
+                        SET current_holder = ?, department = ?, location = ?, designation = ?,
+                            employee_code = ?, employee_mobile = ?, date_issued = ?, reallocation_date = ?, remarks = ?
+                        WHERE id = ?
+                    """, (new_holder, new_department, new_location, new_designation,
+                          new_employee_code, new_employee_mobile, str(reallocation_date), str(reallocation_date), remarks, asset_id))
+                    c.execute("""
+                        INSERT INTO history (laptop_id, person_name, department, location, designation, date_issued, date_ended, remarks)
+                        VALUES (?, ?, ?, ?, ?, ?, NULL, ?)
+                    """, (asset_id, new_holder, new_department, new_location, new_designation, str(reallocation_date), remarks))
+                    conn.commit()
+                    conn.close()
                     st.success("Asset reallocated successfully. Previous assignment saved to history.")
                     st.rerun()
 
@@ -648,7 +673,7 @@ def show_reports(role):
 
     if search_query.strip():
         q = search_query.strip().lower()
-        search_fields = ["vendor_name", "current_holder", "department", "location", "serial_number", "date_issued", "reallocation_date", "status"]
+        search_fields = ["vendor_name", "current_holder", "department", "location", "serial_number", "date_issued", "reallocation_date", "status", "employee_code", "employee_mobile"]
         search_idxs = [cols.index(f) for f in search_fields if f in cols]
         filtered = [
             r for r in filtered
@@ -663,7 +688,7 @@ def show_reports(role):
         export_cols = [
             "id", "asset_type", "model_name", "serial_number", "vendor_name",
             "purchase_date", "department", "location", "designation", "current_holder",
-            "date_issued", "reallocation_date", "status", "remarks"
+            "employee_code", "employee_mobile", "date_issued", "reallocation_date", "status", "remarks"
         ]
         export_col_idxs = [cols.index(c) for c in export_cols if c in cols]
         export_data = [[r[i] for i in export_col_idxs] for r in filtered]
