@@ -1,43 +1,37 @@
-#  Asset Management App
+# Asset Management App
 
-Simple Streamlit + SQLite app to track asset assignments — who has each asset,
-their department/location/designation, when it was issued, and full reallocation history.
+Simple Streamlit + Supabase app to track assets across locations — who has each asset, department, location, designation, when issued, and full reallocation history.
+
+Supports 4 asset types: Laptop, i Pad, Desktop, Phone.
 
 ## Roles
-- **Admin** — sees inventory, can add/reallocate laptops, does NOT see reallocation dates or history log.
-- **Head Admin** — sees everything, including full history of every laptop and can create new user accounts.
+
+- **Admin** — sees inventory, can add/reallocate assets, does NOT see reallocation dates or history.
+- **Head Admin** — sees everything, including full reallocation history and can create new user accounts.
+
+##  running locally
+
+1. Install Python 3.9+
+2. Install dependencies:
+3. Update `app.py` with your Supabase credentials 
+   - `SUPABASE_URL` = your project URL
+   - `SUPABASE_KEY` = your anon key from Supabase Settings → API
+
+4. Run:
+
+## Supabase Setup
+
+1. Create account at [supabase.com](https://supabase.com)
+2. Create new project (Region: India/Mumbai)
+3. Run SQL queries  (creates tables and default users)
+4. Copy Project URL and Anon Key into app.py
+
+## Deploy to internet
+
+Push to GitHub, then deploy free on [Streamlit Cloud](https://streamlit.io/cloud):
+- Connect your GitHub repo
+- Point to `app.py`
+- Get public URL instantly
 
 
-## How to run locally
-
-1. Install Python 3.9+ if you don't have it.
-2. Open a terminal in this folder.
-3. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-4. Run the app:
-   ```
-   streamlit run app.py
-   ```
-5. It will open automatically in your browser at `http://localhost:8501`.
-   The database file `laptops.db` is created automatically in the same folder on first run.
-
-## Making it accessible beyond localhost
-- **Same wifi/network:** run `streamlit run app.py --server.address 0.0.0.0` then others on the
-  same network can access it via your machine's local IP, e.g. `http://192.168.x.x:8501`.
-- **Public internet :** push this folder to a GitHub repo,
-  then deploy for free on [Streamlit Community Cloud](https://streamlit.io/cloud) — connect your
-  GitHub repo, point it to `app.py`, and it gives you a public URL.
-
-## Git setup (quick)
-```
-git init
-git add .
-git commit -m "Initial asset management app"
-git branch -M main
-git remote add origin <your-repo-url>
-git push -u origin main
-```
-(Streamlit Cloud deploys directly from that repo afterward.)
 
