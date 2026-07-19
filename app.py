@@ -14,10 +14,13 @@ from docx import Document
 from docx.shared import Inches, Pt, RGBColor  
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-# ============ SUPABASE CONFIG - ADD YOUR KEYS HERE ============
-SUPABASE_URL = "https://uthdmnqizwslgpxrbork.supabase.co"  
-SUPABASE_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0aGRtbnFpendzbGdweHJib3JrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyNjc5NTAsImV4cCI6MjA5OTg0Mzk1MH0.gdV3duAKYgLKWU5R6gUOHugdf87kWKTVUcVZ2CLkMvs"
-# ============================================================
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
